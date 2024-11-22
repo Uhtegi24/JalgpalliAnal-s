@@ -44,10 +44,10 @@ def loo_ennustusmudel(faili_tee):
     return mudel, le
 
 def ennusta_mängu_tulemus(mudel, le, koduvõõrsil, eelmine_tulemus):
-    koduvõõrsil_kood = 1 if koduvõrsil == 'Kodu' else 0
+    koduvõõrsil_kood = 1 if koduvõõrsil == 'Kodu' else 0
     eelmine_tulemus_kood = le.transform([eelmine_tulemus])[0]
 
-    ennustus = mudel.predict([[koduvõrsil_kood, eelmine_tulemus_kood]])
+    ennustus = mudel.predict([[koduvõõrsil_kood, eelmine_tulemus_kood]])
     ennustatud_tulemus = le.inverse_transform(ennustus)[0]
     return ennustatud_tulemus
 
