@@ -1,11 +1,11 @@
-Date,Home/Away,Opponent,Goals Scored,Goals Conceded,Result
-2024-11-10,Home,Arsenal,1,1,Draw
-2024-11-06,Away,Bayern Munich,1,2,Loss
-2024-11-02,Home,Fulham,2,0,Win
-2024-10-30,Home,Newcastle,3,1,Win
-2024-10-26,Away,Tottenham,0,1,Loss
-2024-10-22,Home,Sevilla,1,1,Draw
-2024-10-19,Home,Brentford,3,0,Win
-2024-10-06,Away,Brighton,1,1,Draw
-2024-10-03,Home,Lazio,2,1,Win
-2024-09-30,Away,Liverpool,1,2,Loss
+Kuupäev,Koduvõõrsil,Vastane,Skoor,Tulemus,Vastastele_Löögid,Vastastelt_Löögid,Koduvõõrsil_Kood,Tulemus_Kood,Eelmine_Kohtumine
+2024-11-10,Kodu,Arsenal,1-1,Viik,1,1,1,1,2
+2024-11-06,Võõrsil,Bayern Munich,1-2,Kaotus,1,2,0,0,1
+2024-11-02,Kodu,Fulham,2-0,Võit,2,0,1,2,1
+2024-10-30,Kodu,Newcastle,3-1,Võit,3,1,1,2,2
+2024-10-26,Võõrsil,Tottenham,0-1,Kaotus,0,1,0,0,2
+2024-10-22,Kodu,Sevilla,1-1,Viik,1,1,1,1,2
+2024-10-19,Kodu,Brentford,3-0,Võit,3,0,1,2,2
+2024-10-06,Võõrsil,Brighton,1-1,Viik,1,1,0,1,2
+2024-10-03,Kodu,Lazio,2-1,Võit,2,1,1,2,2
+2024-09-30,Võõrsil,Liverpool,1-2,Kaotus,1,2,0,0,2

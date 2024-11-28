@@ -1,11 +1,11 @@
-Date,Home/Away,Opponent,Goals Scored,Goals Conceded,Result
-2024-11-09,Away,Brighton,1,2,Loss
-2024-11-05,Away,Sporting Lisbon,1,4,Loss
-2024-11-02,Away,Bournemouth,1,2,Loss
-2024-10-30,Away,Tottenham,1,2,Loss
-2024-10-26,Home,Southampton,1,0,Win
-2024-10-23,Home,Sparta Prague,5,0,Win
-2024-10-20,Away,Wolverhampton,2,1,Win
-2024-10-05,Home,Fulham,3,2,Win
-2024-10-01,Away,Slovan Bratislava,4,0,Win
-2024-09-28,Away,Nottingham Forest,1,2,Loss
+Kuupäev,Koduvõõrsil,Vastane,Skoor,Tulemus,Vastastele_Löögid,Vastastelt_Löögid,Koduvõõrsil_Kood,Tulemus_Kood,Eelmine_Kohtumine
+2024-11-09,Võõrsil,Brighton,1-2,Kaotus,1,2,0,0,2
+2024-11-05,Võõrsil,Sporting Lisbon,1-4,Kaotus,1,4,0,0,2
+2024-11-02,Võõrsil,Bournemouth,1-2,Kaotus,1,2,0,0,2
+2024-10-30,Võõrsil,Tottenham,1-2,Kaotus,1,2,0,0,2
+2024-10-26,Kodu,Southampton,1-0,Võit,1,0,1,2,0
+2024-10-23,Kodu,Sparta Prague,5-0,Võit,5,0,1,2,2
+2024-10-20,Võõrsil,Wolverhampton,2-1,Võit,2,1,0,2,2
+2024-10-05,Kodu,Fulham,3-2,Võit,3,2,1,2,2
+2024-10-01,Võõrsil,Slovan Bratislava,4-0,Võit,4,0,0,2,2
+2024-09-28,Võõrsil,Nottingham Forest,1-2,Kaotus,1,2,0,0,2
