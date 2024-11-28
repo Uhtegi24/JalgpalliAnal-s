@@ -2,8 +2,15 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from analüüs import töödelda_mängu_andmed  # Andmete töötlemine
 from visualiseerimine import joonista_tulemused  # Graafikute loomine
-from mudel import treeni_mudel  # Mudeli treenimine
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score
 import pandas as pd
+
+# Ülemaailmsed muutujad mudeli ja kodeerija hoidmiseks
+globaalne_mudel = None
+globaalne_le = None
 
 # Funktsioon andmefaili avamiseks ja töötlemiseks
 def avada_fail():
@@ -89,6 +96,7 @@ def ennusta_tulemus():
     # Küsige sisendväärtused
     koduvõõrsil = filedialog.askstring("Sisend", "Sisestage koduvõõrsil ('Kodu' või 'Võõrsil'):")
     eelmine_tulemus = filedialog.askstring("Sisend", "Sisestage eelmine tulemus ('Kaotus', 'Viik' või 'Võit'):")
+
     try:
         koduvõõrsil_kood = 1 if koduvõõrsil == 'Kodu' else 0
         eelmine_tulemus_kood = globaalne_le.transform([eelmine_tulemus])[0]
@@ -99,26 +107,25 @@ def ennusta_tulemus():
         messagebox.showerror("Viga", f"Ilmnes viga ennustamisel: {str(e)}")
 
 # Looge peamine GUI aken
-def luua_gui():
-    root = tk.Tk()
-    root.title("Jalgpalli meeskonna analüüs ja ennustus")
-    root.geometry("700x500")
+root = tk.Tk()
+root.title("Jalgpalli meeskonna analüüs ja ennustus")
+root.geometry("700x500")
 
-    # GUI komponendid
-    label = tk.Label(root, text="Jalgpalli meeskonna andmete analüüs", font=("Arial", 16))
-    label.pack(pady=20)
+# GUI komponendid
+label = tk.Label(root, text="Jalgpalli meeskonna andmete analüüs", font=("Arial", 16))
+label.pack(pady=20)
 
-    laadi_fail_nupp = tk.Button(root, text="Laadi andmefail analüüsiks", font=("Arial", 12), command=avada_fail)
-    laadi_fail_nupp.pack(pady=10)
+laadi_fail_nupp = tk.Button(root, text="Laadi andmefail analüüsiks", font=("Arial", 12), command=avada_fail)
+laadi_fail_nupp.pack(pady=10)
 
-    treeni_nupp = tk.Button(root, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_mudel)
-    treeni_nupp.pack(pady=10)
+treeni_nupp = tk.Button(root, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_mudel)
+treeni_nupp.pack(pady=10)
 
-    ennusta_nupp = tk.Button(root, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_tulemus)
-    ennusta_nupp.pack(pady=10)
+ennusta_nupp = tk.Button(root, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_tulemus)
+ennusta_nupp.pack(pady=10)
 
-    tulemus_tekst = tk.Text(root, width=80, height=15, wrap=tk.WORD, font=("Arial", 10))
-    tulemus_tekst.pack(pady=20)
+tulemus_tekst = tk.Text(root, width=80, height=15, wrap=tk.WORD, font=("Arial", 10))
+tulemus_tekst.pack(pady=20)
 
-    # Alustage GUI sündmuste tsüklit
-    root.mainloop()
+# Alusta GUI sündmuste tsüklit
+root.mainloop()
