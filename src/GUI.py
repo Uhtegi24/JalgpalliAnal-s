@@ -6,12 +6,11 @@ import pandas as pd
 from src.analüüs import MänguAnalüüs
 import os
 
-
-# Ìldmaailmsed muutujad mudeli ja kodeerija hoidmiseks
+# Globaalmuutujad mudeli ja kodeerija hoidmiseks
 globaalne_mudel = None
 globaalne_kodeerija = None
 globaalne_andmed = None
-globaalne_failid = []  # List to store file names
+globaalne_failid = []  # List failide nimede hoidmiseks
 
 # Funktsioon andmefailide avamiseks ja kombineerimiseks
 def avada_failid():
@@ -20,24 +19,24 @@ def avada_failid():
     """
     failid = filedialog.askopenfilenames(title="Valige meeskondade andmefailid", filetypes=[("CSV Failid", "*.csv")])
 
-    if len(failid) <= 5:  # Ensuring no more than 5 files are selected
+    if len(failid) <= 5:  # Veendu, et valitakse kuni 5 faili
         if failid:
             try:
-                # Determine the folder path from the first selected file
+                # Määrake kausta tee esimesest failist
                 failide_kaust = os.path.dirname(failid[0])
 
-                # Create an instance of MänguAnalüüs class and load the data
+                # Loo MänguAnalüüs klassi eksemplar ja laadi andmed
                 analüüs = MänguAnalüüs(failide_kaust=failide_kaust)
-                globaalne_andmed = analüüs.lae_andmed()  # Load the data
+                globaalne_andmed = analüüs.lae_andmed()  # Laadi andmed
 
                 global globaalne_mudel, globaalne_kodeerija, globaalne_failid
-                globaalne_failid = failid  # Store the file paths
-                globaalne_andmed = analüüs.andmed  # Use the combined data from MänguAnalüüs
+                globaalne_failid = failid  # Salvesta failiteed
+                globaalne_andmed = analüüs.andmed  # Kasuta kombineeritud andmeid MänguAnalüüsist
 
-                # Preparing the dropdown with file names
-                failide_nimed = [os.path.basename(f) for f in failid]  # Extract file names only
-                dropdown['values'] = failide_nimed  # Set dropdown options
-                dropdown.current(0)  # Set the first option as selected by default
+                # Valikumenüü ettevalmistamine failinimedega
+                failide_nimed = [os.path.basename(f) for f in failid]  # Ekstrakti ainult failinimed
+                valikumenüü['values'] = failide_nimed  # Sea valikumenüü valikud
+                valikumenüü.current(0)  # Sea esimene valik vaikimisi valituks
 
                 messagebox.showinfo("Edu", "Kõik andmed laaditi ja kombineeriti edukalt!")
             except Exception as viga:
@@ -53,17 +52,17 @@ def visualiseeri_tulemused():
     Funktsioon valitud faili statistika ja graafikute kuvamiseks.
     """
     try:
-        selected_file_index = dropdown.current()  # Get selected file index
-        if selected_file_index == -1:
+        valitud_faili_indeks = valikumenüü.current()  # Hangi valitud faili indeks
+        if valitud_faili_indeks == -1:
             messagebox.showwarning("Hoiatus", "Valige fail, mille tulemusi visualiseerida.")
             return
 
-        selected_file = globaalne_failid[selected_file_index]
-        # Load the selected data
-        selected_data = pd.read_csv(selected_file)
+        valitud_fail = globaalne_failid[valitud_faili_indeks]
+        # Laadi valitud failist andmed
+        valitud_andmed = pd.read_csv(valitud_fail)
 
-        # Visualize the data using the function from visualiseerimine.py
-        joonista_tulemused(selected_data)
+        # Visualiseeri andmeid funktsiooni joonista_tulemused abil
+        joonista_tulemused(valitud_andmed)
     except Exception as e:
         messagebox.showerror("Viga", f"Ilmnes viga graafikute genereerimisel: {str(e)}")
 
@@ -84,7 +83,7 @@ def treeni_ennustusmudel():
         messagebox.showerror("Viga", f"Mudeli treenimisel ilmnes viga: {str(e)}")
 
 # Funktsioon mängu tulemuse ennustamiseks
-def ennusta_tulemus():
+def ennusta_mängu_tulemus():
     """
     Ennustab järgmise mängu tulemuse kasutades treenitud mudelit.
     """
@@ -98,7 +97,7 @@ def ennusta_tulemus():
 
     if koduvõõrsil and keskmine_skoor is not None and keskmine_skoor_vastane is not None:
         try:
-            # Predict outcome using the model
+            # Ennusta tulemus mudeli abil
             tulemus = ennusta_tulemus(
                 globaalne_mudel,
                 globaalne_kodeerija,
@@ -114,35 +113,35 @@ def ennusta_tulemus():
         messagebox.showwarning("Hoiatus", "Kõiki sisendväärtusi ei sisestatud.")
 
 # GUI loomine
-root = tk.Tk()
-root.title("Jalgpalli meeskonna analüüs ja ennustus")
-root.geometry("700x500")
+juur = tk.Tk()
+juur.title("Jalgpalli meeskonna analüüs ja ennustus")
+juur.geometry("700x500")
 
 # GUI komponendid
-label = tk.Label(root, text="Jalgpalli meeskonna andmete analüüs ja ennustus", font=("Arial", 16))
-label.pack(pady=20)
+silt = tk.Label(juur, text="Jalgpalli meeskonna andmete analüüs ja ennustus", font=("Arial", 16))
+silt.pack(pady=20)
 
-laadi_failid_nupp = tk.Button(root, text="Laadi mitme meeskonna andmefailid", font=("Arial", 12), command=avada_failid)
+laadi_failid_nupp = tk.Button(juur, text="Laadi mitme meeskonna andmefailid", font=("Arial", 12), command=avada_failid)
 laadi_failid_nupp.pack(pady=10)
 
-# Dropdown for selecting file to visualize
-dropdown_label = tk.Label(root, text="Valige fail visualiseerimiseks:", font=("Arial", 12))
-dropdown_label.pack(pady=10)
+# Valikumenüü faili visualiseerimiseks
+valikumenüü_silt = tk.Label(juur, text="Valige fail visualiseerimiseks:", font=("Arial", 12))
+valikumenüü_silt.pack(pady=10)
 
-dropdown = ttk.Combobox(root, font=("Arial", 12))
-dropdown.pack(pady=10)
+valikumenüü = ttk.Combobox(juur, font=("Arial", 12))
+valikumenüü.pack(pady=10)
 
-# Button to visualize results
-visualiseeri_nupp = tk.Button(root, text="Visualiseeri tulemused", font=("Arial", 12), command=visualiseeri_tulemused)
+# Nupp tulemuste visualiseerimiseks
+visualiseeri_nupp = tk.Button(juur, text="Visualiseeri tulemused", font=("Arial", 12), command=visualiseeri_tulemused)
 visualiseeri_nupp.pack(pady=10)
 
-# Button for training the model
-treeni_mudel_nupp = tk.Button(root, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_ennustusmudel)
+# Nupp mudeli treenimiseks
+treeni_mudel_nupp = tk.Button(juur, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_ennustusmudel)
 treeni_mudel_nupp.pack(pady=10)
 
-# Button for predicting the result
-ennusta_nupp = tk.Button(root, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_tulemus)
+# Nupp mängu tulemuse ennustamiseks
+ennusta_nupp = tk.Button(juur, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_mängu_tulemus)
 ennusta_nupp.pack(pady=10)
 
-# Alusta GUI sündmuste tsükill
-root.mainloop()
+# GUI sündmuste tsükli alustamine
+juur.mainloop()
