@@ -35,15 +35,18 @@ class MänguAnalüüs:
         :param faili_tee: Str, CSV faili tee
         :return: Pandas DataFrame, töödeldud andmed
         """
-        df = pd.read_csv(faili_tee)
+        try:
+            df = pd.read_csv(faili_tee)
+        except Exception as e:
+            raise ValueError(f"Viga faili lugemisel: {e}")
         
         # Kontrollime, et kõik vajalikud veerud on olemas
-        vajalikud_veerud = ['Kuupäev', 'Koduvõõrsil', 'Vastane', 'Skoor', 'Tulemus', 'Vastastele_Väravad', 'Vastastelt_Väravad']
+        vajalikud_veerud = ['Kuupäev', 'Koduvõrsil', 'Vastane', 'Skoor', 'Tulemus', 'Vastastele_Väravad', 'Vastastelt_Väravad']
         if not all(veeru in df.columns for veeru in vajalikud_veerud):
             raise ValueError(f"CSV fail peab sisaldama järgmisi veerge: {', '.join(vajalikud_veerud)}")
         
         # Kuupäeva konverteerimine datetime formaati
-        df['Kuupäev'] = pd.to_datetime(df['Kuupäev'])
+        df['Kuupäev'] = pd.to_datetime(df['Kuupäev'], errors='coerce')
 
         # Arvutame koduvõidu, võõrvõidu, kodukaotuse ja võõrkaotuse veerud
         df['Koduvõit'] = df.apply(lambda rida: rida['Tulemus'] == 'Võit' if rida['Koduvõrsil'] == 'Kodu' else False, axis=1)
@@ -52,8 +55,11 @@ class MänguAnalüüs:
         df['Võõrkaotus'] = df.apply(lambda rida: rida['Tulemus'] == 'Kaotus' if rida['Koduvõrsil'] == 'Võõrsil' else False, axis=1)
         
         # Arvutame väravad, mis meeskond on löönud ja vastased, mis meeskond on löönud
-        df['Koduväravad'] = df.apply(lambda rida: int(rida['Skoor'].split('-')[0]), axis=1)
-        df['Võõrväravad'] = df.apply(lambda rida: int(rida['Skoor'].split('-')[1]), axis=1)
+        try:
+            df['Koduväravad'] = df.apply(lambda rida: int(rida['Skoor'].split('-')[0]), axis=1)
+            df['Võõrväravad'] = df.apply(lambda rida: int(rida['Skoor'].split('-')[1]), axis=1)
+        except Exception as e:
+            raise ValueError(f"Skoori töötlemise viga: {e}")
 
         # Arvutame ka vastaste väravad ja vastastelt saadud väravad
         df['Vastaste väravad'] = df['Vastastele_Väravad']
@@ -82,41 +88,3 @@ class MänguAnalüüs:
             raise ValueError("Kombineeritud andmeid ei leitud. Laadige andmed esmalt.")
         
         return self._arvuta_statistika_df(self.kombineeritud_andmed)
-
-    def _arvuta_statistika_df(self, df):
-        """
-        Abimeetod statistika arvutamiseks.
-        :param df: Pandas DataFrame
-        :return: Sõnastik statistiliste näitajatega
-        """
-        kogumängud = len(df)
-        koduvõidud = df['Koduvõit'].sum()
-        võõrvõidud = df['Võõrvõit'].sum()
-        kodukaotused = df['Kodukaotus'].sum()
-        võõrkaotused = df['Võõrkaotus'].sum()
-        
-        # Arvutame koduvõitude, võõrvõitude, kodukaotuste ja võõrkaotuste suhte
-        koduvõidu_suhe = koduvõidud / kogumängud if kogumängud > 0 else 0
-        võõrvõidu_suhe = võõrvõidud / kogumängud if kogumängud > 0 else 0
-        kodukaotuse_suhe = kodukaotused / kogumängud if kogumängud > 0 else 0
-        võõrkaotuse_suhe = võõrkaotused / kogumängud if kogumängud > 0 else 0
-        
-        # Arvutame väravad: löödud väravad ja vastaste väravad
-        koguväravad = df['Koduväravad'].sum() + df['Võõrväravad'].sum()
-        vastased_väravad = df['Vastaste väravad'].sum()
-        
-        statistika = {
-            "Kogumängud": kogumängud,
-            "Koduvõidud": koduvõidud,
-            "Võõrvõidud": võõrvõidud,
-            "Kodukaotused": kodukaotused,
-            "Võõrkaotused": võõrkaotused,
-            "Koduvõidu suhe": koduvõidu_suhe,
-            "Võõrvõidu suhe": võõrvõidu_suhe,
-            "Kodukaotuse suhe": kodukaotuse_suhe,
-            "Võõrkaotuse suhe": võõrkaotuse_suhe,
-            "Löödud väravad": koguväravad,
-            "Vastased löödud väravad": vastased_väravad,
-        }
-
-        return statistika

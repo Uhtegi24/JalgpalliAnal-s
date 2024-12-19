@@ -95,13 +95,24 @@ def ennusta_tulemus():
 
     if koduvõõrsil and keskmine_skoor is not None and keskmine_skoor_vastane is not None:
         try:
+            # Get the last scores for home team and opponent from the data
+            kodumeeskond = koduvõõrsil
+            vastase_meeskond = 'Vastane'  # You may need to get this from a dropdown or user input
+
+            kodumeeskonna_skoor = globaalne_andmed[globaalne_andmed['Meeskond'] == kodumeeskond]['Skoor'].iloc[-1]
+            vastase_skoor = globaalne_andmed[globaalne_andmed['Meeskond'] == vastase_meeskond]['Vastastele_Väravad'].iloc[-1]
+
+            # Now pass all required arguments to ennusta_tulemus
             tulemus = ennusta_tulemus(
                 globaalne_mudel,
                 globaalne_kodeerija,
                 koduvõõrsil=koduvõõrsil,
                 keskmine_skoor=keskmine_skoor,
-                keskmine_skoor_vastane=keskmine_skoor_vastane
+                keskmine_skoor_vastane=keskmine_skoor_vastane,
+                skoor=kodumeeskonna_skoor,
+                vastastele_väravad=vastase_skoor
             )
+
             messagebox.showinfo("Ennustus", f"Järgmise mängu ennustatud tulemus: {tulemus}")
         except Exception as e:
             messagebox.showerror("Viga", f"Ilmnes viga ennustamisel: {str(e)}")
