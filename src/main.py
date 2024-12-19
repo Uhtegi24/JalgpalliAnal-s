@@ -1,135 +1,59 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
-from src.analüüs import töödelda_mängu_andmed  # Andmete töötlemine
-from src.visualiseerimine import joonista_tulemused  # Graafikute loomine
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, accuracy_score
-import pandas as pd
-from src.GUI import luua_gui
+import os
+import sys
 
-luua_gui()
+# Lisa projekti juurkataloog Pythoni otsinguteedesse
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Impordi moodulid
+from src.analüüs import MänguAnalüüs
+from src.mudel import treeni_mudel, ennusta_tulemus
+from src.GUI import käivita_gui
+from src.visualiseerimine import joonista_tulemused
 
 
-# Ülemaailmsed muutujad mudeli ja kodeerija hoidmiseks
-globaalne_mudel = None
-globaalne_le = None
-
-# Funktsioon andmefaili avamiseks ja töötlemiseks
-def avada_fail():
+def põhiprogramm():
     """
-    Funktsioon andmefaili valimiseks, analüüsimiseks ja visualiseerimiseks.
+    Põhiprogramm, mis koordineerib analüüsi, mudeli treenimise, visualiseerimise ja GUI käivitamist.
     """
-    failitee = filedialog.askopenfilename(
-        title="Valige andmefail",
-        filetypes=[("CSV Failid", "*.csv"), ("Tekstifailid", "*.txt")]
-    )
-    if failitee:
-        try:
-            # Laadige ja töödelge andmed
-            andmed = töödelda_mängu_andmed(failitee)
-            messagebox.showinfo("Edu", f"Andmed laaditi ja töödeldi edukalt: {failitee}")
-            
-            # Kuvage analüüsi tulemused tekstikastis
-            analüüsi_andmed(andmed)
-            
-            # Looge visualisatsioonid
-            joonista_tulemused(andmed)
-        except Exception as e:
-            messagebox.showerror("Viga", f"Ilmnes viga: {str(e)}")
+    # Kausta tee, kus asuvad andmefailid
+    failide_kaust = input("Sisestage andmefailide kausta tee: ")
 
-# Funktsioon andmete analüüsimiseks ja tulemuste kuvamiseks
-def analüüsi_andmed(andmed):
-    """
-    Kuvab põhiandmete analüüsi tekstiväljal.
-    """
-    statistika = andmed.describe()
-    tulemus_tekst.delete(1.0, tk.END)
-    tulemus_tekst.insert(tk.END, "Andmete analüüsi tulemused:\n")
-    tulemus_tekst.insert(tk.END, str(statistika))
+    # Loo analüüsi objekt ja lae andmed
+    analüüs = MänguAnalüüs(failide_kaust)
+    analüüs.lae_kõik_failid()
 
-# Funktsioon ennustusmudeli treenimiseks
-def treeni_mudel():
-    """
-    Loob ennustusmudeli ja kuvab selle täpsuse.
-    """
-    failitee = filedialog.askopenfilename(
-        title="Valige andmefail mudeli treenimiseks",
-        filetypes=[("CSV Failid", "*.csv")]
-    )
-    if failitee:
-        try:
-            df = töödelda_mängu_andmed(failitee)
-            
-            # Andmete ettevalmistus mudeli treenimiseks
-            X = df[['Koduvõõrsil_kood', 'Eelmine_kohtumine']]
-            y = df['Tulemus_kood']
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-            
-            mudel = RandomForestClassifier(n_estimators=100, random_state=42)
-            mudel.fit(X_train, y_train)
-            
-            y_pred = mudel.predict(X_test)
-            täpsus = accuracy_score(y_test, y_pred)
-            raport = classification_report(y_test, y_pred, target_names=['Kaotus', 'Viik', 'Võit'])
-            
-            # Salvestage mudel ja kodeerija globaalsetesse muutujatesse
-            global globaalne_mudel, globaalne_le
-            globaalne_mudel = mudel
-            globaalne_le = LabelEncoder()
-            globaalne_le.fit(df['Tulemus'])
-            
-            # Kuvage tulemused
-            tulemus_tekst.delete(1.0, tk.END)
-            tulemus_tekst.insert(tk.END, f"Mudel treenitud edukalt!\n\nTäpsus: {täpsus:.2f}\n")
-            tulemus_tekst.insert(tk.END, "Mõõdikud:\n")
-            tulemus_tekst.insert(tk.END, raport)
-        except Exception as e:
-            messagebox.showerror("Viga", f"Ilmnes viga mudeli treenimisel: {str(e)}")
+    # Kuvame meeskondade andmete analüüsi
+    for meeskond in analüüs.andmed:
+        print(f"Statistika meeskonna {meeskond} kohta:")
+        statistika = analüüs.arvuta_statistika(meeskond)
+        for k, v in statistika.items():
+            print(f"  {k}: {v}")
 
-# Funktsioon mängu tulemuse ennustamiseks
-def ennusta_tulemus():
-    """
-    Ennustab järgmise mängu tulemuse, kui mudel on treenitud.
-    """
-    if globaalne_mudel is None or globaalne_le is None:
-        messagebox.showerror("Viga", "Mudel pole treenitud! Treeni mudel enne ennustamist.")
-        return
-    
-    # Küsige sisendväärtused
-    koduvõõrsil = filedialog.askstring("Sisend", "Sisestage koduvõõrsil ('Kodu' või 'Võõrsil'):")
-    eelmine_tulemus = filedialog.askstring("Sisend", "Sisestage eelmine tulemus ('Kaotus', 'Viik' või 'Võit'):")
+    # Visualiseeri ühte meeskonna andmeid
+    valitud_meeskond = input("Sisestage meeskond, kelle andmeid soovite visualiseerida: ")
+    if valitud_meeskond in analüüs.andmed:
+        joonista_tulemused(analüüs.andmed[valitud_meeskond])
+    else:
+        print(f"Meeskonda {valitud_meeskond} ei leitud.")
 
-    try:
-        koduvõõrsil_kood = 1 if koduvõõrsil == 'Kodu' else 0
-        eelmine_tulemus_kood = globaalne_le.transform([eelmine_tulemus])[0]
-        ennustus = globaalne_mudel.predict([[koduvõõrsil_kood, eelmine_tulemus_kood]])
-        ennustatud_tulemus = globaalne_le.inverse_transform(ennustus)[0]
-        messagebox.showinfo("Ennustus", f"Järgmise mängu ennustatud tulemus: {ennustatud_tulemus}")
-    except Exception as e:
-        messagebox.showerror("Viga", f"Ilmnes viga ennustamisel: {str(e)}")
+    # Treeni mudel ja tee ennustusi
+    print("Treeningmudeli loomine...")
+    mudel, kodeerija = treeni_mudel(analüüs.andmed)
 
-# Looge peamine GUI aken
-root = tk.Tk()
-root.title("Jalgpalli meeskonna analüüs ja ennustus")
-root.geometry("700x500")
+    print("Mängu tulemuse ennustamine...")
+    ennustuse_sisendid = {
+        "Koduvõõrsil": input("Sisestage koduvõõrsil ('Kodu' või 'Võõrsil'): "),
+        "Eelmine_tulemus": input("Sisestage eelmine tulemus ('Kaotus', 'Viik', 'Võit'): ")
+    }
+    ennustus = ennusta_tulemus(mudel, kodeerija, ennustuse_sisendid)
+    print(f"Ennustatud tulemus: {ennustus}")
 
-# GUI komponendid
-label = tk.Label(root, text="Jalgpalli meeskonna andmete analüüs", font=("Arial", 16))
-label.pack(pady=20)
+    # Käivita GUI, kui see on vajalik
+    käivita_gui()
 
-laadi_fail_nupp = tk.Button(root, text="Laadi andmefail analüüsiks", font=("Arial", 12), command=avada_fail)
-laadi_fail_nupp.pack(pady=10)
 
-treeni_nupp = tk.Button(root, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_mudel)
-treeni_nupp.pack(pady=10)
-
-ennusta_nupp = tk.Button(root, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_tulemus)
-ennusta_nupp.pack(pady=10)
-
-tulemus_tekst = tk.Text(root, width=80, height=15, wrap=tk.WORD, font=("Arial", 10))
-tulemus_tekst.pack(pady=20)
-
-# Alusta GUI sündmuste tsüklit
-root.mainloop()
+if __name__ == "__main__":
+    põhiprogramm()

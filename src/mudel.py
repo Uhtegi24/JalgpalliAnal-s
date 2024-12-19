@@ -6,7 +6,7 @@ from sklearn.metrics import classification_report, accuracy_score
 
 def lae_ja_töötle_meeskonna_andmed(faili_tee, meeskonna_nimi):
     df = pd.read_csv(faili_tee)
-    df = df[df['Meeskond'] == meeskonna_nimi]  # Filtreerime valitud meeskonna andmed
+    df['Meeskond'] = meeskonna_nimi  # Lisame meeskonna nime veeruna
 
     vajalikud_veerud = ['Kuupäev', 'Koduvõõrsil', 'Vastane', 'Skoor', 'Tulemus']
     if not all(veeru in df.columns for veeru in vajalikud_veerud):
@@ -14,9 +14,14 @@ def lae_ja_töötle_meeskonna_andmed(faili_tee, meeskonna_nimi):
 
     df['Kuupäev'] = pd.to_datetime(df['Kuupäev'])
 
+    # Konverteerime 'Skoor' numbriliseks ja käsitleme vead
+    df['Skoor'] = pd.to_numeric(df['Skoor'], errors='coerce')
+
+    # Eemaldame read, kus 'Skoor' on puudu või mitte-numbriline
+    df = df.dropna(subset=['Skoor'])
+
     # Tulemuste kodeerimine
-    kodeerija = LabelEncoder()
-    df['Tulemus_kood'] = kodeerija.fit_transform(df['Tulemus'])
+    df['Tulemus_kood'] = LabelEncoder().fit_transform(df['Tulemus'])
 
     # Koduvõõrsil asukoha kodeerimine
     df['Koduvõõrsil_kood'] = df['Koduvõõrsil'].map({'Kodu': 1, 'Võõrsil': 0})
@@ -25,19 +30,30 @@ def lae_ja_töötle_meeskonna_andmed(faili_tee, meeskonna_nimi):
     df['Keskmine_skoor'] = df['Skoor'].rolling(window=3).mean().shift(1)
     df['Keskmine_skoor_vastane'] = df.groupby('Vastane')['Skoor'].transform('mean').shift(1)
 
-    df = df.dropna()  # Eemaldame read, kus on puuduvad väärtused
+    df = df.dropna()  # Eemaldame read, kus on puuduvad väärtused pärast arvutusi
 
-    return df, kodeerija
+    return df
 
-def valmista_kombineeritud_andmed(meeskond1_fail, meeskond2_fail, meeskond1_nimi, meeskond2_nimi):
-    meeskond1_andmed, kodeerija1 = lae_ja_töötle_meeskonna_andmed(meeskond1_fail, meeskond1_nimi)
-    meeskond2_andmed, kodeerija2 = lae_ja_töötle_meeskonna_andmed(meeskond2_fail, meeskond2_nimi)
+def valmista_kombineeritud_andmed(meeskonnad):
+    """
+    Töötleb mitme meeskonna andmefailid ja kombineerib need.
+    :param meeskonnad: Loend tuplest (failitee, meeskonna_nimi)
+    :return: Kombineeritud andmed ja LabelEncoder
+    """
+    kombineeritud_df = pd.DataFrame()
 
-    kombineeritud_df = pd.concat([meeskond1_andmed, meeskond2_andmed], ignore_index=True)
+    for faili_tee, meeskonna_nimi in meeskonnad:
+        df = lae_ja_töötle_meeskonna_andmed(faili_tee, meeskonna_nimi)
+        kombineeritud_df = pd.concat([kombineeritud_df, df], ignore_index=True)
 
-    return kombineeritud_df, kodeerija1  # Eeldame, et mõlemad meeskonnad kasutavad sama kodeerijat
+    # Kodeerime kõik meeskonnanimed ja vastased ühtselt
+    kodeerija = LabelEncoder()
+    kombineeritud_df['Meeskond_kood'] = kodeerija.fit_transform(kombineeritud_df['Meeskond'])
+    kombineeritud_df['Vastane_kood'] = kodeerija.transform(kombineeritud_df['Vastane'])
 
-def treeni_ennustusmudel(andmed):
+    return kombineeritud_df, kodeerija
+
+def treeni_mudel(andmed):
     tunnused = ['Koduvõõrsil_kood', 'Keskmine_skoor', 'Keskmine_skoor_vastane']
     sihtmärk = 'Tulemus_kood'
 
@@ -58,12 +74,10 @@ def treeni_ennustusmudel(andmed):
 
     return mudel
 
-def ennusta_järgmine_mäng(mudel, kodeerija, koduvõõrsil, keskmine_skoor, keskmine_skoor_vastane):
+def ennusta_tulemus(mudel, kodeerija, koduvõõrsil, keskmine_skoor, keskmine_skoor_vastane):
     koduvõõrsil_kood = 1 if koduvõõrsil == 'Kodu' else 0
     sisend_andmed = [[koduvõõrsil_kood, keskmine_skoor, keskmine_skoor_vastane]]
 
     ennustus = mudel.predict(sisend_andmed)
     ennustatud_tulemus = kodeerija.inverse_transform(ennustus)[0]
     return ennustatud_tulemus
-
-

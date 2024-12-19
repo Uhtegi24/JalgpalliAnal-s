@@ -9,16 +9,25 @@ class MänguAnalüüs:
         """
         self.failide_kaust = failide_kaust
         self.andmed = {}  # Sõnastik meeskondade andmetest
+        self.kombineeritud_andmed = None  # Kõigi meeskondade ühendatud DataFrame
 
     def lae_kõik_failid(self):
         """
         Laeb kõik CSV failid antud kaustast ja hoiab need meeskonna nime järgi.
         """
+        andmed_list = []
         for fail in os.listdir(self.failide_kaust):
             if fail.endswith(".csv"):
                 meeskond = os.path.splitext(fail)[0]
                 faili_tee = os.path.join(self.failide_kaust, fail)
-                self.andmed[meeskond] = self.töödelda_mängu_andmed(faili_tee)
+                df = self.töödelda_mängu_andmed(faili_tee)
+                df['Meeskond'] = meeskond  # Lisame meeskonna nime veeru
+                self.andmed[meeskond] = df
+                andmed_list.append(df)
+        
+        # Kombineerime kõik DataFrame'id üheks, kui on olemas vähemalt üks fail
+        if andmed_list:
+            self.kombineeritud_andmed = pd.concat(andmed_list, ignore_index=True)
 
     def töödelda_mängu_andmed(self, faili_tee):
         """
@@ -47,6 +56,24 @@ class MänguAnalüüs:
             raise ValueError(f"Meeskonna {meeskond} andmeid ei leitud.")
         
         df = self.andmed[meeskond]
+        return self._arvuta_statistika_df(df)
+
+    def arvuta_kõigi_statistika(self):
+        """
+        Arvutab statistika kõigi kombineeritud andmete põhjal.
+        :return: Sõnastik statistiliste näitajatega
+        """
+        if self.kombineeritud_andmed is None:
+            raise ValueError("Kombineeritud andmeid ei leitud. Laadige andmed esmalt.")
+        
+        return self._arvuta_statistika_df(self.kombineeritud_andmed)
+
+    def _arvuta_statistika_df(self, df):
+        """
+        Abimeetod statistika arvutamiseks.
+        :param df: Pandas DataFrame
+        :return: Sõnastik statistiliste näitajatega
+        """
         kogumängud = len(df)
         koduvõidud = df['Koduvõit'].sum()
         võõrvõidud = df['Võõrvõit'].sum()
