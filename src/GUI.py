@@ -127,12 +127,15 @@ dropdown_label.pack(pady=10)
 dropdown = ttk.Combobox(root, font=("Arial", 12))
 dropdown.pack(pady=10)
 
+# Button to visualize results
 visualiseeri_nupp = tk.Button(root, text="Visualiseeri tulemused", font=("Arial", 12), command=visualiseeri_tulemused)
 visualiseeri_nupp.pack(pady=10)
 
+# Button for training the model
 treeni_mudel_nupp = tk.Button(root, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_ennustusmudel)
 treeni_mudel_nupp.pack(pady=10)
 
+# Button for predicting the result
 ennusta_nupp = tk.Button(root, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_tulemus)
 ennusta_nupp.pack(pady=10)
 

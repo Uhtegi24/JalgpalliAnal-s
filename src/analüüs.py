@@ -36,14 +36,29 @@ class MänguAnalüüs:
         :return: Pandas DataFrame, töödeldud andmed
         """
         df = pd.read_csv(faili_tee)
-        vajalikud_veerud = ['Kuupäev', 'Koduvõõrsil', 'Vastane', 'Skoor', 'Tulemus']
+        
+        # Kontrollime, et kõik vajalikud veerud on olemas
+        vajalikud_veerud = ['Kuupäev', 'Koduvõõrsil', 'Vastane', 'Skoor', 'Tulemus', 'Vastastele_Väravad', 'Vastastelt_Väravad']
         if not all(veeru in df.columns for veeru in vajalikud_veerud):
             raise ValueError(f"CSV fail peab sisaldama järgmisi veerge: {', '.join(vajalikud_veerud)}")
+        
+        # Kuupäeva konverteerimine datetime formaati
         df['Kuupäev'] = pd.to_datetime(df['Kuupäev'])
-        df['Koduvõit'] = df.apply(lambda rida: rida['Tulemus'] == 'Võit' if rida['Koduvõõrsil'] == 'Kodu' else False, axis=1)
-        df['Võõrvõit'] = df.apply(lambda rida: rida['Tulemus'] == 'Võit' if rida['Koduvõõrsil'] == 'Võõrsil' else False, axis=1)
-        df['Kodukaotus'] = df.apply(lambda rida: rida['Tulemus'] == 'Kaotus' if rida['Koduvõõrsil'] == 'Kodu' else False, axis=1)
-        df['Võõrkaotus'] = df.apply(lambda rida: rida['Tulemus'] == 'Kaotus' if rida['Koduvõõrsil'] == 'Võõrsil' else False, axis=1)
+
+        # Arvutame koduvõidu, võõrvõidu, kodukaotuse ja võõrkaotuse veerud
+        df['Koduvõit'] = df.apply(lambda rida: rida['Tulemus'] == 'Võit' if rida['Koduvõrsil'] == 'Kodu' else False, axis=1)
+        df['Võõrvõit'] = df.apply(lambda rida: rida['Tulemus'] == 'Võit' if rida['Koduvõrsil'] == 'Võõrsil' else False, axis=1)
+        df['Kodukaotus'] = df.apply(lambda rida: rida['Tulemus'] == 'Kaotus' if rida['Koduvõrsil'] == 'Kodu' else False, axis=1)
+        df['Võõrkaotus'] = df.apply(lambda rida: rida['Tulemus'] == 'Kaotus' if rida['Koduvõrsil'] == 'Võõrsil' else False, axis=1)
+        
+        # Arvutame väravad, mis meeskond on löönud ja vastased, mis meeskond on löönud
+        df['Koduväravad'] = df.apply(lambda rida: int(rida['Skoor'].split('-')[0]), axis=1)
+        df['Võõrväravad'] = df.apply(lambda rida: int(rida['Skoor'].split('-')[1]), axis=1)
+
+        # Arvutame ka vastaste väravad ja vastastelt saadud väravad
+        df['Vastaste väravad'] = df['Vastastele_Väravad']
+        df['Vastastelt väravad'] = df['Vastastelt_Väravad']
+        
         return df
 
     def arvuta_statistika(self, meeskond):
@@ -79,17 +94,29 @@ class MänguAnalüüs:
         võõrvõidud = df['Võõrvõit'].sum()
         kodukaotused = df['Kodukaotus'].sum()
         võõrkaotused = df['Võõrkaotus'].sum()
-
+        
+        # Arvutame koduvõitude, võõrvõitude, kodukaotuste ja võõrkaotuste suhte
+        koduvõidu_suhe = koduvõidud / kogumängud if kogumängud > 0 else 0
+        võõrvõidu_suhe = võõrvõidud / kogumängud if kogumängud > 0 else 0
+        kodukaotuse_suhe = kodukaotused / kogumängud if kogumängud > 0 else 0
+        võõrkaotuse_suhe = võõrkaotused / kogumängud if kogumängud > 0 else 0
+        
+        # Arvutame väravad: löödud väravad ja vastaste väravad
+        koguväravad = df['Koduväravad'].sum() + df['Võõrväravad'].sum()
+        vastased_väravad = df['Vastaste väravad'].sum()
+        
         statistika = {
             "Kogumängud": kogumängud,
             "Koduvõidud": koduvõidud,
             "Võõrvõidud": võõrvõidud,
             "Kodukaotused": kodukaotused,
             "Võõrkaotused": võõrkaotused,
-            "Koduvõidu suhe": koduvõidud / kogumängud if kogumängud > 0 else 0,
-            "Võõrvõidu suhe": võõrvõidud / kogumängud if kogumängud > 0 else 0,
-            "Kodukaotuse suhe": kodukaotused / kogumängud if kogumängud > 0 else 0,
-            "Võõrkaotuse suhe": võõrkaotused / kogumängud if kogumängud > 0 else 0,
+            "Koduvõidu suhe": koduvõidu_suhe,
+            "Võõrvõidu suhe": võõrvõidu_suhe,
+            "Kodukaotuse suhe": kodukaotuse_suhe,
+            "Võõrkaotuse suhe": võõrkaotuse_suhe,
+            "Löödud väravad": koguväravad,
+            "Vastased löödud väravad": vastased_väravad,
         }
 
-        return statistika   
+        return statistika
