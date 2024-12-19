@@ -1,13 +1,13 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from analüüs import töödelda_mängu_andmed  # Andmete töötlemine
-from visualiseerimine import joonista_tulemused  # Graafikute loomine
+from src.analüüs import töödelda_mängu_andmed  # Andmete töötlemine
+from src.visualiseerimine import joonista_tulemused  # Graafikute loomine
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 import pandas as pd
-from GUI import luua_gui
+from src.GUI import luua_gui
 
 luua_gui()
 
