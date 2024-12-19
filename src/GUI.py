@@ -1,10 +1,13 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog, ttk
+from tkinter import filedialog, messagebox, ttk, simpledialog
 from src.mudel import valmista_kombineeritud_andmed, treeni_mudel, ennusta_tulemus
 from src.visualiseerimine import joonista_tulemused
 import pandas as pd
+from src.analüüs import MänguAnalüüs
+import os
 
-# Ülemaailmsed muutujad mudeli ja kodeerija hoidmiseks
+
+# Ìldmaailmsed muutujad mudeli ja kodeerija hoidmiseks
 globaalne_mudel = None
 globaalne_kodeerija = None
 globaalne_andmed = None
@@ -17,32 +20,32 @@ def avada_failid():
     """
     failid = filedialog.askopenfilenames(title="Valige meeskondade andmefailid", filetypes=[("CSV Failid", "*.csv")])
 
-    if failid:
-        meeskonnad = []
-        for fail in failid:
-            meeskonna_nimi = simpledialog.askstring("Sisend", f"Sisestage meeskonna nimi failile: {fail}")
-            if not meeskonna_nimi:
-                messagebox.showwarning("Hoiatus", f"Meeskonna nime ei sisestatud failile: {fail}")
-                return
-            meeskonnad.append((fail, meeskonna_nimi))
+    if len(failid) <= 5:  # Ensuring no more than 5 files are selected
+        if failid:
+            try:
+                # Determine the folder path from the first selected file
+                failide_kaust = os.path.dirname(failid[0])
 
-        try:
-            andmed, kodeerija = valmista_kombineeritud_andmed(meeskonnad)
-            global globaalne_andmed, globaalne_kodeerija, globaalne_failid
-            globaalne_andmed = andmed
-            globaalne_kodeerija = kodeerija
-            globaalne_failid = failid  # Save the file paths
-            messagebox.showinfo("Edu", "Kõik andmed laaditi ja kombineeriti edukalt!")
+                # Create an instance of MänguAnalüüs class and load the data
+                analüüs = MänguAnalüüs(failide_kaust=failide_kaust)
+                globaalne_andmed = analüüs.lae_andmed()  # Load the data
 
-            # Populating the dropdown with file names
-            failide_nimed = [f.split("/")[-1] for f in globaalne_failid]  # Get just the file names
-            dropdown['values'] = failide_nimed  # Set the dropdown options
-            dropdown.current(0)  # Set the first option as selected by default
+                global globaalne_mudel, globaalne_kodeerija, globaalne_failid
+                globaalne_failid = failid  # Store the file paths
+                globaalne_andmed = analüüs.andmed  # Use the combined data from MänguAnalüüs
 
-        except Exception as viga:
-            messagebox.showerror("Viga", f"Ilmnes viga andmete töötlemisel: {str(viga)}")
+                # Preparing the dropdown with file names
+                failide_nimed = [os.path.basename(f) for f in failid]  # Extract file names only
+                dropdown['values'] = failide_nimed  # Set dropdown options
+                dropdown.current(0)  # Set the first option as selected by default
+
+                messagebox.showinfo("Edu", "Kõik andmed laaditi ja kombineeriti edukalt!")
+            except Exception as viga:
+                messagebox.showerror("Viga", f"Ilmnes viga andmete töötlemisel: {str(viga)}")
+        else:
+            messagebox.showwarning("Hoiatus", "Andmefaile ei valitud.")
     else:
-        messagebox.showwarning("Hoiatus", "Andmefaile ei valitud.")
+        messagebox.showwarning("Hoiatus", "Palun valige mitte rohkem kui 5 faili.")
 
 # Funktsioon mängu tulemuste visualiseerimiseks
 def visualiseeri_tulemused():
@@ -95,22 +98,13 @@ def ennusta_tulemus():
 
     if koduvõõrsil and keskmine_skoor is not None and keskmine_skoor_vastane is not None:
         try:
-            # Get the last scores for home team and opponent from the data
-            kodumeeskond = koduvõõrsil
-            vastase_meeskond = 'Vastane'  # You may need to get this from a dropdown or user input
-
-            kodumeeskonna_skoor = globaalne_andmed[globaalne_andmed['Meeskond'] == kodumeeskond]['Skoor'].iloc[-1]
-            vastase_skoor = globaalne_andmed[globaalne_andmed['Meeskond'] == vastase_meeskond]['Vastastele_Väravad'].iloc[-1]
-
-            # Now pass all required arguments to ennusta_tulemus
+            # Predict outcome using the model
             tulemus = ennusta_tulemus(
                 globaalne_mudel,
                 globaalne_kodeerija,
                 koduvõõrsil=koduvõõrsil,
                 keskmine_skoor=keskmine_skoor,
-                keskmine_skoor_vastane=keskmine_skoor_vastane,
-                skoor=kodumeeskonna_skoor,
-                vastastele_väravad=vastase_skoor
+                keskmine_skoor_vastane=keskmine_skoor_vastane
             )
 
             messagebox.showinfo("Ennustus", f"Järgmise mängu ennustatud tulemus: {tulemus}")
@@ -150,5 +144,5 @@ treeni_mudel_nupp.pack(pady=10)
 ennusta_nupp = tk.Button(root, text="Ennusta mängu tulemus", font=("Arial", 12), command=ennusta_tulemus)
 ennusta_nupp.pack(pady=10)
 
-# Alusta GUI sündmuste tsüklit
+# Alusta GUI sündmuste tsükill
 root.mainloop()
