@@ -92,4 +92,4 @@ class MänguAnalüüs:
             "Võõrkaotuse suhe": võõrkaotused / kogumängud if kogumängud > 0 else 0,
         }
 
-        return statistika
+        return statistika   

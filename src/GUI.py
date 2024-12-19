@@ -1,12 +1,14 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox, simpledialog, ttk
 from src.mudel import valmista_kombineeritud_andmed, treeni_mudel, ennusta_tulemus
+from src.visualiseerimine import joonista_tulemused
 import pandas as pd
 
 # Ülemaailmsed muutujad mudeli ja kodeerija hoidmiseks
 globaalne_mudel = None
 globaalne_kodeerija = None
 globaalne_andmed = None
+globaalne_failid = []  # List to store file names
 
 # Funktsioon andmefailide avamiseks ja kombineerimiseks
 def avada_failid():
@@ -26,14 +28,41 @@ def avada_failid():
 
         try:
             andmed, kodeerija = valmista_kombineeritud_andmed(meeskonnad)
-            global globaalne_andmed, globaalne_kodeerija
+            global globaalne_andmed, globaalne_kodeerija, globaalne_failid
             globaalne_andmed = andmed
             globaalne_kodeerija = kodeerija
+            globaalne_failid = failid  # Save the file paths
             messagebox.showinfo("Edu", "Kõik andmed laaditi ja kombineeriti edukalt!")
+
+            # Populating the dropdown with file names
+            failide_nimed = [f.split("/")[-1] for f in globaalne_failid]  # Get just the file names
+            dropdown['values'] = failide_nimed  # Set the dropdown options
+            dropdown.current(0)  # Set the first option as selected by default
+
         except Exception as viga:
             messagebox.showerror("Viga", f"Ilmnes viga andmete töötlemisel: {str(viga)}")
     else:
         messagebox.showwarning("Hoiatus", "Andmefaile ei valitud.")
+
+# Funktsioon mängu tulemuste visualiseerimiseks
+def visualiseeri_tulemused():
+    """
+    Funktsioon valitud faili statistika ja graafikute kuvamiseks.
+    """
+    try:
+        selected_file_index = dropdown.current()  # Get selected file index
+        if selected_file_index == -1:
+            messagebox.showwarning("Hoiatus", "Valige fail, mille tulemusi visualiseerida.")
+            return
+
+        selected_file = globaalne_failid[selected_file_index]
+        # Load the selected data
+        selected_data = pd.read_csv(selected_file)
+
+        # Visualize the data using the function from visualiseerimine.py
+        joonista_tulemused(selected_data)
+    except Exception as e:
+        messagebox.showerror("Viga", f"Ilmnes viga graafikute genereerimisel: {str(e)}")
 
 # Funktsioon mudeli treenimiseks
 def treeni_ennustusmudel():
@@ -90,6 +119,16 @@ label.pack(pady=20)
 
 laadi_failid_nupp = tk.Button(root, text="Laadi mitme meeskonna andmefailid", font=("Arial", 12), command=avada_failid)
 laadi_failid_nupp.pack(pady=10)
+
+# Dropdown for selecting file to visualize
+dropdown_label = tk.Label(root, text="Valige fail visualiseerimiseks:", font=("Arial", 12))
+dropdown_label.pack(pady=10)
+
+dropdown = ttk.Combobox(root, font=("Arial", 12))
+dropdown.pack(pady=10)
+
+visualiseeri_nupp = tk.Button(root, text="Visualiseeri tulemused", font=("Arial", 12), command=visualiseeri_tulemused)
+visualiseeri_nupp.pack(pady=10)
 
 treeni_mudel_nupp = tk.Button(root, text="Treenige ennustusmudel", font=("Arial", 12), command=treeni_ennustusmudel)
 treeni_mudel_nupp.pack(pady=10)

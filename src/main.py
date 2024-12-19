@@ -32,7 +32,7 @@ def põhiprogramm():
         for k, v in statistika.items():
             print(f"  {k}: {v}")
 
-    # Visualiseeri ühte meeskonna andmeid
+    # Visualiseeri ühe meeskonna andmeid
     valitud_meeskond = input("Sisestage meeskond, kelle andmeid soovite visualiseerida: ")
     if valitud_meeskond in analüüs.andmed:
         joonista_tulemused(analüüs.andmed[valitud_meeskond])
